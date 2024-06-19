@@ -1,6 +1,7 @@
 // components/Activities.tsx
 
 import { useEffect, useState } from "react";
+import { getActivities } from "@/lib/strava";
 
 interface Activity {
 	id: number;
@@ -15,25 +16,26 @@ interface Activity {
 	timezone: string;
 }
 
-const Activities = () => {
+const StravaActivities = ({ accessToken }: { accessToken: string }) => {
 	const [activities, setActivities] = useState<Activity[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchActivities = async () => {
 			try {
-				const response = await fetch("/api/strava");
-				if (!response.ok) {
-					throw new Error(`Failed to fetch activities: ${response.statusText}`);
-				}
-				const data: Activity[] = await response.json();
+				const data = await getActivities(accessToken);
 				setActivities(data);
-			} catch (error) {
-				setError(error.message);
+			} catch (error: unknown) {
+				if (error instanceof Error) {
+					setError(error.message);
+				} else {
+					setError("An unknown error occurred");
+				}
 			}
 		};
 
 		fetchActivities();
-	}, []);
+	}, [accessToken]);
 
 	if (error) {
 		return <div>Error: {error}</div>;
@@ -59,4 +61,4 @@ const Activities = () => {
 	);
 };
 
-export default Activities;
+export default StravaActivities;

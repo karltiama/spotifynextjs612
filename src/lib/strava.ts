@@ -5,6 +5,7 @@ interface TokenResponse {
 	token_type: string;
 	expires_at: number;
 	expires_in: number;
+	refresh_token: string;
 }
 
 interface Activity {
@@ -18,46 +19,11 @@ interface Activity {
 	start_date: string;
 	start_date_local: string;
 	timezone: string;
-	// Add more fields as needed
 }
 
-const getAccessToken = async (): Promise<string> => {
-	const { STRAVA_REFRESH_TOKEN, STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET } =
-		process.env;
-
-	if (!STRAVA_REFRESH_TOKEN || !STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
-		throw new Error("Missing Strava credentials");
-	}
-
-	const body = new URLSearchParams({
-		grant_type: "refresh_token",
-		refresh_token: STRAVA_REFRESH_TOKEN,
-		client_id: STRAVA_CLIENT_ID,
-		client_secret: STRAVA_CLIENT_SECRET,
-	});
-
-	const response = await fetch("https://www.strava.com/oauth/token", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded",
-		},
-		body,
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(
-			`Failed to get access token: ${response.statusText} - ${errorText}`
-		);
-	}
-
-	const data = (await response.json()) as TokenResponse;
-	return data.access_token;
-};
-
-export const getActivities = async (): Promise<Activity[]> => {
-	const accessToken = await getAccessToken();
-
+export const getActivities = async (
+	accessToken: string
+): Promise<Activity[]> => {
 	const response = await fetch(
 		"https://www.strava.com/api/v3/athlete/activities",
 		{
